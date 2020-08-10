@@ -43,6 +43,52 @@ tt_6_regimes_finite_sensitivity_function <- function(dat=sensitivity_trial_4$bas
   return(dat)
 }
 
+tt_6_regimes_finite_sensitivity_bs_function <- function(dat=sensitivity_trial_4$basedata, x, natural=FALSE){   # for bootstrap without printing
+  dat <- dynamic_assignment_function(dat=dat, x=x)
+  dat <- dat %>% mutate(assigned=pmax(baseline_volume + x, 0), # assigned is only for participants below the median
+                        neg.assigned=ifelse(x>=-1, 
+                                            pmax(baseline_volume - x, 0), # neg.assigned is only for participants above the median
+                                            baseline_volume + num.available)) %>%
+    group_by(op_npi.new) %>% 
+    mutate(w_t_x = case_when(baseline_volume <  median.vol & surgeon_period==1 ~ 1, # PERIOD 1
+                             baseline_volume <  median.vol & surgeon_period==2 & volume_lag1==assigned ~ 1, # PERIOD 2
+                             baseline_volume <  median.vol & surgeon_period==2 & volume_lag1!=assigned & volume==assigned ~ w_t,
+                             baseline_volume <  median.vol & surgeon_period==2 & volume_lag1!=assigned & volume!=assigned ~ 0,
+                             baseline_volume <  median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )==2 ~ 1, # PERIOD 3
+                             baseline_volume <  median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )==1 & volume==assigned ~ w_t,
+                             baseline_volume <  median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )==1 & volume!=assigned ~ 0,
+                             baseline_volume <  median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )<1 ~ 0,
+                             baseline_volume <  median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==assigned) + as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )==3 ~ 1, # PERIOD 4
+                             baseline_volume <  median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==assigned) + as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )==2 & volume==assigned ~ w_t,
+                             baseline_volume <  median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==assigned) + as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )==2 & volume!=assigned ~ 0,
+                             baseline_volume <  median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==assigned) + as.numeric(volume_lag2==assigned) + as.numeric(volume_lag1==assigned) )<2 ~ 0,
+                             
+                             baseline_volume >= median.vol & surgeon_period==1 ~ 1, # PERIOD 1
+                             baseline_volume >= median.vol & surgeon_period==2 & volume_lag1==neg.assigned ~ 1, # PERIOD 2
+                             baseline_volume >= median.vol & surgeon_period==2 & volume_lag1!=neg.assigned & volume==neg.assigned ~ w_t,
+                             baseline_volume >= median.vol & surgeon_period==2 & volume_lag1!=neg.assigned & volume!=neg.assigned ~ 0,
+                             baseline_volume >= median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )==2 ~ 1, # PERIOD 3
+                             baseline_volume >= median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )==1 & volume==neg.assigned ~ w_t,
+                             baseline_volume >= median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )==1 & volume!=neg.assigned ~ 0,
+                             baseline_volume >= median.vol & surgeon_period==3 & ( as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )<1 ~ 0,
+                             baseline_volume >= median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==neg.assigned) + as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )==3 ~ 1, # PERIOD 4
+                             baseline_volume >= median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==neg.assigned) + as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )==2 & volume==neg.assigned ~ w_t,
+                             baseline_volume >= median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==neg.assigned) + as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )==2 & volume!=neg.assigned ~ 0,
+                             baseline_volume >= median.vol & surgeon_period==4 & ( as.numeric(volume_lag3==neg.assigned) + as.numeric(volume_lag2==neg.assigned) + as.numeric(volume_lag1==neg.assigned) )<2 ~ 0
+    ),
+    w_c = case_when(censor_lead1==1~0,
+                    censor_lead1==0~w_c))
+  if (natural==TRUE){dat <- dat %>% mutate(w_t_x=1)}
+  dat <- dat %>% group_by(op_npi.new) %>% 
+    mutate(w = cumprod(w_t_x*w_c)) %>% 
+    ungroup()
+  # print(c("x"=x, "99.9th %ile"=quantile(dat$w, probs=0.999),
+  #         "max"=max(dat$w)))
+  return(dat)
+}
+
+
+
 
 tt_6_parallel_sensitivity_function <- function(cores, range){
   if(!require("pacman",character.only=T)){install.packages("pacman")}

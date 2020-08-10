@@ -93,8 +93,8 @@ surgeon.table1.fun <- function(dat, title, file.tex){
   rownames(tab1.format) <- c(ifelse(tags1==FALSE, named1, paste("\\hskip .5cm", named1, sep=' ')))
   colnames(tab1.format) <- "Number (\\%) or mean (s.d.)"
   print(xtable(tab1.format, align=c("lr"),
-               caption=paste0("Baseline characteristics (during the 6 months prior to assessment of eligibility criteria) of ", 
-                              length(unique(dat$op_npi))," surgeons who performed ", title),
+               caption=paste0("Baseline characteristics (during the previous 6 months) of ", 
+                              length(unique(dat$op_npi))," eligible surgeons who performed CABG fo U.S. Medicare beneficiaries"),
                label="table:surgeon-characteristics"),
         caption.placement="top",
         type="latex", sanitize.text.function = function(x){x}, 

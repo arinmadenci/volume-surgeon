@@ -46,7 +46,7 @@ sensitivity_nested_4_interval <- nested_4_interval %>% group_by(op_npi.new) %>%
   mutate(exclude = ifelse(lag(censor_lead1)==1 | lag(censor_lead1,2)==1 | lag(censor_lead1,3)==1, 1, NA)) %>% 
   fill(exclude, .direction = "down") %>% ungroup() %>% 
   filter(is.na(exclude))
-
+save(sensitivity_nested_4_interval, file=here("objects","sensitivity-nested-4-interval.Rda"))
 
 
 surgeons.at.highvolhosp <- cabg.base %>% group_by(op_npi) %>% arrange(date_or) %>% 

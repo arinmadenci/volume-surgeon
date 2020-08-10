@@ -1,6 +1,6 @@
 tt_5_standardization_function <- function(dat=nested_1_interval){
   # current period volume
-  m <- geepack::geeglm(data = dat %>% filter(!is.na(death.percent_lead1)), 
+  m <- glm(data = dat %>% filter(!is.na(death.percent_lead1)), 
                        family = "binomial", 
                        cbind(death.count_lead1, volume_lead1 - death.count_lead1) ~ 
                          ns(volume,
@@ -18,17 +18,15 @@ tt_5_standardization_function <- function(dat=nested_1_interval){
                          ns(admission.type_Elective_mean_prev,
                             knots=quantile(admission.type_Elective_mean_prev, probs=c(0.35, 0.65)),
                             Boundary.knots=quantile(admission.type_Elective_mean_prev, probs=c(0.05,0.95))) +
-                         ns(cumave.volume_prev,
-                            knots=quantile(cumave.volume_prev, probs=c(0.35, 0.65)),
-                            Boundary.knots=quantile(cumave.volume_prev, probs=c(0.05,0.95))) +
+                         ns(volume_prev,
+                            knots=quantile(volume_prev, probs=c(0.35, 0.65)),
+                            Boundary.knots=quantile(volume_prev, probs=c(0.05,0.95))) +
                          ns(death.percent_prev2,
                             knots=c(0.03, 0.06, 0.1),
                             Boundary.knots=c(0, 1)) +
                          md_female + surgeon.age + hosp.p_medicare_mean_prev +
                          comorb_ami_mean_prev + comorb_dementia_mean_prev + comorb_afib_mean_prev + comorb_ckd_mean_prev +
-                         comorb_copd_mean_prev +  comorb_chf_mean_prev +  comorb_diabetes_mean_prev + comorb_stroketia_mean_prev,
-                       id=op_npi,
-                       corstr="unstructured"
+                         comorb_copd_mean_prev +  comorb_chf_mean_prev +  comorb_diabetes_mean_prev + comorb_stroketia_mean_prev
   )
   print("outcome model fitting: complete")
   tt5.regimes <- -5:5
